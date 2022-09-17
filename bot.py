@@ -71,7 +71,7 @@ def arbitrage_valbz_vale(
     exchange, vale_bid_price, vale_ask_price, valbz_bid_price, valbz_ask_price
 ):
     global lastTrade
-    if lastTrade > datetime.now() - timedelta(seconds=0.1):
+    if lastTrade > datetime.now() - timedelta(seconds=0.5):
         return
 
     if vale_bid_price is not None and valbz_ask_price is not None:
@@ -108,7 +108,7 @@ def arbitrage_xlf(
     wfc_ob,
 ):
     global lastTrade2, bond, xlf, gs, wfc, ms
-    if lastTrade2 > datetime.now() - timedelta(seconds=1):
+    if lastTrade2 > datetime.now() - timedelta(seconds=0.5):
         return
 
     def findTotal(ob, needs):
@@ -123,16 +123,16 @@ def arbitrage_xlf(
                 return total
         return -1
 
-    total_xlf_bid, total_xlf_ask = findTotal(xlf_ob["sell"], 10), findTotal(
-        xlf_ob["buy"], 10
+    total_xlf_bid, total_xlf_ask = findTotal(xlf_ob["buy"], 10), findTotal(
+        xlf_ob["sell"], 10
     )
-    total_bond_bid, total_bond_ask = findTotal(bond_ob["sell"], 3), findTotal(
-        bond_ob["buy"], 3
+    total_bond_bid, total_bond_ask = findTotal(bond_ob["buy"], 3), findTotal(
+        bond_ob["sell"], 3
     )
-    total_gs_bid, total_gs_ask = findTotal(gs_ob["sell"], 2), findTotal(gs_ob["buy"], 2)
-    total_ms_bid, total_ms_ask = findTotal(ms_ob["sell"], 3), findTotal(ms_ob["buy"], 3)
-    total_wfc_bid, total_wfc_ask = findTotal(wfc_ob["sell"], 2), findTotal(
-        wfc_ob["buy"], 2
+    total_gs_bid, total_gs_ask = findTotal(gs_ob["buy"], 2), findTotal(gs_ob["sell"], 2)
+    total_ms_bid, total_ms_ask = findTotal(ms_ob["buy"], 3), findTotal(ms_ob["sell"], 3)
+    total_wfc_bid, total_wfc_ask = findTotal(wfc_ob["buy"], 2), findTotal(
+        wfc_ob["sell"], 2
     )
 
     if -1 in [
@@ -155,7 +155,7 @@ def arbitrage_xlf(
         else:
             return avg * 0.97
 
-    if total_xlf_ask + 15 > (
+    if total_xlf_ask + 1 < (
         total_bond_bid + total_gs_bid + total_ms_bid + total_wfc_bid
     ):
         print("buy xlf")
@@ -168,9 +168,8 @@ def arbitrage_xlf(
         make_order(exchange, "WFC", Dir.SELL, getPrice(total_wfc_bid / 2, Dir.SELL), 2)
         lastTrade2 = datetime.now()
 
-    if (
-        total_xlf_bid
-        < (total_bond_ask + total_gs_ask + total_ms_ask + total_wfc_ask) + 15
+    if total_xlf_bid > (
+        total_bond_ask + total_gs_ask + total_ms_ask + total_wfc_ask + 1
     ):
         print("buy indiv stocks")
         make_order(exchange, "BOND", Dir.BUY, getPrice(total_bond_ask / 3, Dir.BUY), 3)
@@ -186,6 +185,11 @@ def arbitrage_xlf(
         print("convert xlf to indiv")
         convert(exchange, "XLF", Dir.SELL, 100)
         lastTrade2 = datetime.now()
+        xlf = 0
+        gs = 0
+        ms = 0
+        bond = 0
+        wfc = 0
 
     if bond + gs + ms + wfc == 100:
         print("convert indiv to XLF")
@@ -244,19 +248,6 @@ def main():
     while True:
         global lastTrade
 
-        if valbzCount >= 10:
-            if lastTrade <= datetime.now() - timedelta(seconds=1):
-                convert(exchange, "VALE", Dir.BUY, 10)
-                lastTrade = datetime.now()
-                valbzCount = 0
-                valeCount = 0
-        if valeCount >= 10:
-            if lastTrade <= datetime.now() - timedelta(seconds=1):
-                convert(exchange, "VALE", Dir.SELL, 10)
-                lastTrade = datetime.now()
-                valbzCount = 0
-                valeCount = 0
-
         message = exchange.read_message()
         # Some of the message types below happen infrequently and contain
         # important information to help you understand what your bot is doing,
@@ -283,6 +274,7 @@ def main():
                 if message["dir"] == Dir.SELL:
                     qty = -qty
                 valbzCount += qty
+
             if message["symbol"] == "XLF":
                 qty = message["size"] if message["dir"] == Dir.BUY else -message["size"]
                 xlf += qty
@@ -356,16 +348,30 @@ def main():
             if message["symbol"] == "WFC":
                 wfc_ob = {"buy": message["buy"], "sell": message["sell"]}
                 arbitrage_xlf(exchange, xlf_ob, bond_ob, gs_ob, ms_ob, wfc_ob)
-            # print("valeCount", valeCount)
-            # print("valbzCount", valbzCount)
+            print("valeCount", valeCount)
+            print("valbzCount", valbzCount)
 
-            # arbitrage_valbz_vale(
-            #     exchange,
-            #     valbz_bid_price,
-            #     valbz_ask_price,
-            #     vale_bid_price,
-            #     vale_ask_price,
-            # )
+
+            if valbzCount >= 10:
+                if lastTrade <= datetime.now() - timedelta(seconds=0.5):
+                    convert(exchange, "VALE", Dir.BUY, 10)
+                    lastTrade = datetime.now()
+                    valbzCount = 0
+                    valeCount = 0
+            if valeCount >= 10:
+                if lastTrade <= datetime.now() - timedelta(seconds=0.5):
+                    convert(exchange, "VALE", Dir.SELL, 10)
+                    lastTrade = datetime.now()
+                    valbzCount = 0
+                    valeCount = 0
+                    
+            arbitrage_valbz_vale(
+                exchange,
+                valbz_bid_price,
+                valbz_ask_price,
+                vale_bid_price,
+                vale_ask_price,
+            )
 
 
 # ~~~~~============== PROVIDED CODE ==============~~~~~
