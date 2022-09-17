@@ -151,11 +151,11 @@ def arbitrage_xlf(
 
     def getPrice(avg, dir):
         if dir == Dir.BUY:
-            return avg * 1.03
+            return avg * 1.025
         else:
-            return avg * 0.97
+            return avg * 0.985
 
-    if total_xlf_ask + 1 < (
+    if total_xlf_ask - 20 < (
         total_bond_bid + total_gs_bid + total_ms_bid + total_wfc_bid
     ):
         print("buy xlf")
@@ -169,7 +169,7 @@ def arbitrage_xlf(
         lastTrade2 = datetime.now()
 
     if total_xlf_bid > (
-        total_bond_ask + total_gs_ask + total_ms_ask + total_wfc_ask + 1
+        total_bond_ask + total_gs_ask + total_ms_ask + total_wfc_ask - 20
     ):
         print("buy indiv stocks")
         make_order(exchange, "BOND", Dir.BUY, getPrice(total_bond_ask / 3, Dir.BUY), 3)
@@ -351,7 +351,6 @@ def main():
             print("valeCount", valeCount)
             print("valbzCount", valbzCount)
 
-
             if valbzCount >= 10:
                 if lastTrade <= datetime.now() - timedelta(seconds=0.5):
                     convert(exchange, "VALE", Dir.BUY, 10)
@@ -364,7 +363,7 @@ def main():
                     lastTrade = datetime.now()
                     valbzCount = 0
                     valeCount = 0
-                    
+
             arbitrage_valbz_vale(
                 exchange,
                 valbz_bid_price,
