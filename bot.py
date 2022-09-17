@@ -77,7 +77,7 @@ def arbitrage_valbz_vale(
     if vale_bid_price is not None and valbz_ask_price is not None:
         diff1 = vale_bid_price - valbz_ask_price
 
-        if diff1 > 2:
+        if diff1 > 1:
             print("diff1: ", diff1)
             print("bid vale: ", vale_bid_price)
             print("ask valbz: ", valbz_ask_price)
@@ -89,7 +89,7 @@ def arbitrage_valbz_vale(
     if valbz_bid_price is not None and vale_ask_price is not None:
         diff2 = valbz_bid_price - vale_ask_price
 
-        if diff2 > 2:
+        if diff2 > 1:
             print("diff2: ", diff2)
             print("bid valbz: ", valbz_bid_price)
             print("ask vale: ", vale_ask_price)
@@ -155,7 +155,7 @@ def arbitrage_xlf(
         else:
             return avg * 0.985
 
-    if total_xlf_ask - 20 < (
+    if total_xlf_ask - 10 < (
         total_bond_bid + total_gs_bid + total_ms_bid + total_wfc_bid
     ):
         print("buy xlf")
@@ -169,7 +169,7 @@ def arbitrage_xlf(
         lastTrade2 = datetime.now()
 
     if total_xlf_bid > (
-        total_bond_ask + total_gs_ask + total_ms_ask + total_wfc_ask - 20
+        total_bond_ask + total_gs_ask + total_ms_ask + total_wfc_ask - 10
     ):
         print("buy indiv stocks")
         make_order(exchange, "BOND", Dir.BUY, getPrice(total_bond_ask / 3, Dir.BUY), 3)
@@ -181,7 +181,7 @@ def arbitrage_xlf(
         )
         lastTrade2 = datetime.now()
 
-    if xlf == 100:
+    if xlf >= 100:
         print("convert xlf to indiv")
         convert(exchange, "XLF", Dir.SELL, 100)
         lastTrade2 = datetime.now()
@@ -191,7 +191,7 @@ def arbitrage_xlf(
         bond = 0
         wfc = 0
 
-    if bond + gs + ms + wfc == 100:
+    if bond + gs + ms + wfc >= 100:
         print("convert indiv to XLF")
         convert(exchange, "XLF", Dir.BUY, 100)
         lastTrade2 = datetime.now()
